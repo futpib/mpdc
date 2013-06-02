@@ -29,10 +29,18 @@ class LastfmHelper:
                       '&track={track}&autocorrect=1',
     }
 
-    bad_tags = ['beautiful', 'awesome', 'epic', 'masterpiece', 'favorite',
-                'favourite', 'recommended', 'bands i', 'band i', 'best album',
-                'my album', 'vinyl i', 'album i', 'albums i', 'album you',
-                'albums you']
+    # all tags containing this considered bad
+    bad_substrings = ['beaut', 'awesome', 'epic', 'masterpiece', 'favorite',
+                      'favourite', 'recommend', 'fuckin',
+                      ':3', ':d',
+                     ]
+    # all tags containing this with spaces around considered bad
+    # i.e. 'foo i bar', 'i qweqwe', 'ololo i' and 'i' will be dropped
+    bad_words = ['i', 'my', 'you', 'it', 'love', 'me', 'nice', 'sex', 'sexy',
+                 'fav',
+                ]
+    # drop all tags below this count
+    min_count = 3
 
     min_similarity = 0.30
 
@@ -46,11 +54,12 @@ class LastfmHelper:
             warning('You should update the LastFM database')
 
     def request(self, method, **args):
-        while LastfmHelper.last_request + LastfmHelper.delay > datetime.now():
-            time.sleep(0.1)
+        if self.last_request + self.delay > datetime.now():
+            time_to_sleep = self.last_request + self.delay - datetime.now()
+            time.sleep(time_to_sleep.total_seconds())
 
         args_ = {key: urllib.parse.quote(value) for key, value in args.items()}
-        url = LastfmHelper.url + LastfmHelper.methods[method].format(**args_)
+        url = self.url + self.methods[method].format(**args_)
 
         try:
             raw_json = urllib.request.urlopen(url, timeout=15).read()
@@ -63,7 +72,7 @@ class LastfmHelper:
             warning('Time out... attempt n°' + str(self.timeout + 1))
             return self.request(method, **args)
         else:
-            LastfmHelper.last_request = datetime.now()
+            self.last_request = datetime.now()
             response = json.loads(raw_json.decode('utf-8'))
             if 'error' in response:
                 warning('LastFM error: {}'.format(response['message']))
@@ -76,9 +85,11 @@ class LastfmHelper:
             tags = [tags]
         tags_sanitized = {}
         for tag in tags:
-            if all(bad not in tag['name'].lower() for bad in
-               LastfmHelper.bad_tags) and int(tag['count']):
-                tags_sanitized[tag['name'].lower()] = int(tag['count'])
+            if any(bad not in tag['name'].lower() for bad in self.bad_substrings) \
+            or any(bad not in tag['name'].split() for bad in self.bad_words) \
+            or int(tag['count']) < min_count:
+                continue
+            tags_sanitized[tag['name'].lower()] = int(tag['count'])
         return tags_sanitized
 
     def get_artist_tags(self, artist, update=False):

@@ -13,6 +13,7 @@ from mpdc.libs.parser import parser
 # --------------------------------
 
 def update(args):
+    mpd.mpdclient.update()
     mpd.update_cache()
     cache.write('playlists', mpd.get_stored_playlists_info())
     collectionsmanager.feed(force=True)

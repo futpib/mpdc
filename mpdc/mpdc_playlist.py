@@ -5,7 +5,6 @@ import argparse
 import subprocess
 
 from mpdc.initialize import mpd
-from mpdc.libs.utils import input_box
 from mpdc.libs.parser import parser
 
 
@@ -50,14 +49,6 @@ def replace(args):
     mpd.clear()
     if songs:
         mpd.add(songs)
-
-
-def replacep(args):
-    songs = list(parser.parse(args.collection))
-    mpd.clear()
-    if songs:
-        mpd.add(songs)
-        mpd.play()
 
 
 def play(args):
