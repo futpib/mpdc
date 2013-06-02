@@ -63,6 +63,12 @@ class CollectionsManager:
     def update_cache(self):
         cache.write('collections', self.collections)
 
+    def update(self):
+        if self.need_update:
+            self.write_file()
+            self.update_cache()
+            cache.write('playlists', mpd.get_stored_playlists_info())
+
 
 # Human-readable format -> dictionary of collections including MPD playlists
 def raw_to_optimized(collections_raw):

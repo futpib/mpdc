@@ -22,7 +22,9 @@ def update(args):
 
 def check(args):
     songs = []
-    for song, tags in mpd.get_all_songs_tags().items():
+    song_tags_dict = mpd.get_all_songs_tags()
+    for song in parser.parse(' '.join(args.collection)):
+        tags = song_tags_dict[song]
         missing_tags = [tag for tag, value in tags.items() if not value]
         if missing_tags:
             warning(colorize(song, colors[0]))
@@ -40,10 +42,14 @@ def check(args):
                                                                tags['title'],
                                                                tags['track']]),
                                                      colors[1 % len(colors)]))
+            # necessary because MPDHelper's get_all_songs_tags falls back
+            # to artist if albumartist is empty, while it's find_multiple
+            # (mpdclient.find in fact) does not
+            # not a solution really, so FIXME
+            tags.pop('albumartist')
             files_matched = mpd.find_multiple(**tags)
             print('files matched:\n' + colorize('\n'.join(files_matched),
                                                 colors[0]))
-
 
 def lastfm_update_artists(args):
     tags = lastfm.artists_tags
