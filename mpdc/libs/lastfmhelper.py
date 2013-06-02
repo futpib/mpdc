@@ -14,7 +14,7 @@ from mpdc.libs.utils import similarity, warning
 
 class LastfmHelper:
 
-    api_key = '898b9a1eff53e869c384a4504cb2ca35'
+    api_key = '4e0ccb62907dedff2c1445d752236a2e'
     url = 'http://ws.audioscrobbler.com/2.0/?api_key={}&format=json'. \
           format(api_key)
     delay = timedelta(0, 1)
