@@ -5,9 +5,9 @@ import shlex
 import argparse
 import subprocess
 
-from mpdc.initialize import mpd, collectionsmanager, cache, colors, columns, \
-                            enable_pager, pager
-from mpdc.libs.utils import input_box, esc_quotes, info, warning, colorize, \
+from mpdc.initialize import mpd, collectionsmanager, lastfm, cache, colors, \
+                            columns, enable_pager, pager
+from mpdc.libs.utils import esc_quotes, info, warning, colorize, \
                             columns_width
 from mpdc.libs.parser import parser
 

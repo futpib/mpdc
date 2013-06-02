@@ -5,6 +5,7 @@ from collections import Counter
 
 from mpdc.initialize import mpd, collectionsmanager, lastfm, cache, colors
 from mpdc.libs.utils import repr_tags, info, warning, colorize
+from mpdc.libs.parser import parser
 
 
 # --------------------------------
@@ -58,7 +59,7 @@ def lastfm_update_artists(args):
     for artist in missing_artists:
         print('Fetching {}'.format(artist))
         tags[artist] = lastfm.get_artist_tags(artist, update=True)
-    cache.write('artists_tags', tags)
+    cache.write('lastfm_artists_tags', tags)
 
 
 def lastfm_update_albums(args):
@@ -77,7 +78,63 @@ def lastfm_update_albums(args):
         print('Fetching {} / {}'.format(artist, album))
         tags[(album, artist)] = lastfm.get_album_tags(album,
                                                       artist, update=True)
-    cache.write('albums_tags', tags)
+    cache.write('lastfm_albums_tags', tags)
+
+def lastfm_update_tracks(args):
+    known_tracks = set(lastfm.tracks_tags)
+    all_tracks = set(mpd.list_tracks())
+    #unneeded_tracks = known_tracks - all_tracks
+    #for track in unneeded_tracks:
+        #del lastfm.tracks_tags[album]
+    missing_tracks = all_tracks - known_tracks
+    info('{} missing track(s)'.format(len(missing_tracks)))
+    for track, artist in missing_tracks:
+        print('Fetching {} / {}'.format(artist, track))
+        lastfm.tracks_tags[(track, artist)] = lastfm.get_track_tags(track,
+                                                      artist, update=True)
+    cache.write('lastfm_tracks_tags', lastfm.tracks_tags)
+
+def lastfm_get_artist_tags(args):
+    tracks = parser.parse(' '.join(args.collection))
+    artists = set()
+    for track in tracks:
+        albumartist, artist = mpd.get_tags(track, tags_list=['albumartist','artist'])
+        if artist:
+            artists.add(artist)
+        if albumartist:
+            artists.add(albumartist)
+    for artist in artists:
+        if artist in lastfm.artists_tags and lastfm.artists_tags[artist]:
+            print(':: %s:' % artist)
+            print(', '.join(lastfm.artists_tags[artist]))
+
+def lastfm_get_album_tags(args):
+    tracks = parser.parse(' '.join(args.collection))
+    albums_albumartists = set()
+    for track in tracks:
+        album, albumartist = mpd.get_tags(track, tags_list=['album','albumartist'])
+        if album and albumartist:
+            albums_albumartists.add((album, albumartist))
+    for item in albums_albumartists:
+        if item in lastfm.albums_tags and lastfm.albums_tags[item]:
+            album, albumartist = item
+            print(':: %s — %s:' % (albumartist, album))
+            print(', '.join(lastfm.albums_tags[item]))
+
+def lastfm_get_track_tags(args):
+    tracks = parser.parse(' '.join(args.collection))
+    tracks_artists = set()
+    for trackfile in tracks:
+        trackname, artist, albumartist = mpd.get_tags(trackfile, tags_list=['title','artist','albumartist'])
+        if trackname and albumartist:
+            tracks_artists.add((trackname, albumartist))
+        if trackname and artist:
+            tracks_artists.add((trackname, artist))
+    for item in tracks_artists:
+        if item in lastfm.tracks_tags and lastfm.tracks_tags[item]:
+            track, artist = item
+            print(':: %s — %s:' % (artist, track))
+            print(', '.join(lastfm.tracks_tags[item]))
 
 
 # --------------------------------
@@ -97,6 +154,21 @@ def setup_args(superparser):
     lastfm_p = subparsers.add_parser('lastfm', priority='-')
     lastfm_sp = lastfm_p.add_subparsers()
 
+    lastfm_get_p = lastfm_sp.add_parser('get', priority='-')
+    lastfm_get_sp = lastfm_get_p.add_subparsers()
+
+    lastfm_get_artist_tags_p = lastfm_get_sp.add_parser('artisttags', priority='-')
+    lastfm_get_artist_tags_p.add_argument('collection', nargs='+')
+    lastfm_get_artist_tags_p.set_defaults(func=lastfm_get_artist_tags)
+
+    lastfm_get_album_tags_p = lastfm_get_sp.add_parser('albumtags', priority='-')
+    lastfm_get_album_tags_p.add_argument('collection', nargs='+')
+    lastfm_get_album_tags_p.set_defaults(func=lastfm_get_album_tags)
+
+    lastfm_get_track_tags_p = lastfm_get_sp.add_parser('tracktags', priority='-')
+    lastfm_get_track_tags_p.add_argument('collection', nargs='+')
+    lastfm_get_track_tags_p.set_defaults(func=lastfm_get_track_tags)
+
     lastfm_update_p = lastfm_sp.add_parser('update', priority='-')
     lastfm_update_sp = lastfm_update_p.add_subparsers()
 
@@ -106,6 +178,6 @@ def setup_args(superparser):
     lastfm_update_albums_p = lastfm_update_sp.add_parser('albums', priority='-')
     lastfm_update_albums_p.set_defaults(func=lastfm_update_albums)
 
-    args = argparser.parse_args()
-    args.func(args)
+    lastfm_update_tracks_p = lastfm_update_sp.add_parser('tracks', priority='-')
+    lastfm_update_tracks_p.set_defaults(func=lastfm_update_tracks)
 

@@ -24,7 +24,9 @@ class LastfmHelper:
         'artist_tags': '&method=artist.gettoptags&artist={artist}'
                        '&autocorrect=1',
         'album_tags': '&method=album.gettoptags&artist={artist}'
-                      '&album={album}&autocorrect=1'
+                      '&album={album}&autocorrect=1',
+        'track_tags': '&method=track.gettoptags&artist={artist}'
+                      '&track={track}&autocorrect=1',
     }
 
     bad_tags = ['beautiful', 'awesome', 'epic', 'masterpiece', 'favorite',
@@ -36,12 +38,12 @@ class LastfmHelper:
 
     def __init__(self):
         self.timeout = 0
-        self.artists_tags = {}
-        if cache.exists('artists_tags'):
-            self.artists_tags = cache.read('artists_tags')
-        self.albums_tags = {}
-        if cache.exists('albums_tags'):
-            self.albums_tags = cache.read('albums_tags')
+        self.artists_tags = cache.read('lastfm_artists_tags')
+        self.albums_tags = cache.read('lastfm_albums_tags')
+        self.tracks_tags = cache.read('lastfm_tracks_tags')
+
+        if not (self.artists_tags and self.albums_tags and self.tracks_tags):
+            warning('You should update the LastFM database')
 
     def request(self, method, **args):
         while LastfmHelper.last_request + LastfmHelper.delay > datetime.now():
@@ -81,9 +83,7 @@ class LastfmHelper:
 
     def get_artist_tags(self, artist, update=False):
         if not update:
-            if not self.artists_tags:
-                warning('You should update the LastFM database')
-            elif artist in self.artists_tags:
+            if artist in self.artists_tags:
                 return self.artists_tags[artist]
             return {}
         else:
@@ -95,13 +95,23 @@ class LastfmHelper:
 
     def get_album_tags(self, album, artist, update=False):
         if not update:
-            if not self.albums_tags:
-                warning('You should update the LastFM database')
-            elif (album, artist) in self.albums_tags:
+            if (album, artist) in self.albums_tags:
                 return self.albums_tags[(album, artist)]
             return {}
         else:
             data = self.request('album_tags', artist=artist, album=album)
+            if data is not None:
+                if 'tag' in data.get('toptags', {}):
+                    return self.sanitize_tags(data['toptags']['tag'])
+            return {}
+
+    def get_track_tags(self, track, artist, update=False):
+        if not update:
+            if (track, artist) in self.albums_tags:
+                return self.tracks_tags[(track, artist)]
+            return {}
+        else:
+            data = self.request('track_tags', track=track, artist=artist)
             if data is not None:
                 if 'tag' in data.get('toptags', {}):
                     return self.sanitize_tags(data['toptags']['tag'])
@@ -127,6 +137,16 @@ class LastfmHelper:
             if pattern in tags:
                 yield album
 
+    def search_tracks(self, pattern):
+        for track, tags in self.tracks_tags.items():
+            if any(pattern in tag for tag in tags):
+                yield track
+
+    def find_tracks(self, pattern):
+        for track, tags in self.tracks_tags.items():
+            if pattern in tags:
+                yield track
+
     def get_similar_artists(self, query):
         if not self.artists_tags:
             warning('You should update the LastFM database')
@@ -142,9 +162,6 @@ class LastfmHelper:
             yield artist
 
     def get_similar_albums(self, query):
-        if not self.albums_tags:
-            warning('You should update the LastFM database')
-            return
         scores = {}
         for (album, artist), tags in self.albums_tags.items():
             if tags:

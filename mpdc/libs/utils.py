@@ -23,12 +23,14 @@ class Cache:
     def last_modified(self, name):
         return os.path.getmtime(self.p.format(name=name))
 
-    def read(self, name):
+    def read(self, name, **kwargs):
         try:
             with open(self.p.format(name=name), 'rb') as f:
                 return pickle.load(f)
         except IOError:
             warning('Cannot read cache from: ' + self.p.format(name=name))
+            # we want new empty dict as default for each call
+            return kwargs.get('default', dict())
 
     def write(self, name, data):
         try:

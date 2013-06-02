@@ -136,7 +136,14 @@ class MPDHelper:
         for song in self.get_all_songs_tags().values():
             if song['album'] and song['albumartist']:
                 albums.append((song['album'], song['albumartist']))
-        return list(set(albums))
+        return albums
+
+    def list_tracks(self):
+        tracks = []
+        for song in self.get_all_songs_tags().values():
+            if song['title'] and song['albumartist']:
+                tracks.append((song['title'], song['albumartist']))
+        return tracks
 
     def search(self, filtername, pattern):
         if filtername == 'extension':

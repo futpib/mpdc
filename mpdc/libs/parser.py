@@ -84,7 +84,8 @@ filters_alias = {
     'e': 'extension',
     'x': 'any',
     'la': 'lastfm_a',
-    'lb': 'lastfm_b'
+    'lb': 'lastfm_b',
+    'lt': 'lastfm_t'
 }
 
 
@@ -172,6 +173,18 @@ def p_expression_filter(p):
             matched_songs = mpd.find_multiple(albumartist=artist, album=album)
             if not matched_songs:
                 matched_songs = mpd.find_multiple(artist=artist, album=album)
+            p[0] |= matched_songs
+        p[0] = mpd.set_sort(p[0])
+    elif name == 'lastfm_t':
+        p[0] = OrderedSet()
+        if exact:
+            tracks = lastfm.find_tracks(pattern)
+        else:
+            tracks = lastfm.search_tracks(pattern)
+        for title, artist in tracks:
+            matched_songs = mpd.find_multiple(albumartist=artist, title=title)
+            if not matched_songs:
+                matched_songs = mpd.find_multiple(artist=artist, title=title)
             p[0] |= matched_songs
         p[0] = mpd.set_sort(p[0])
     elif exact:
