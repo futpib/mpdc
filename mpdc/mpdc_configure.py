@@ -66,13 +66,8 @@ def change_default_profile(profile):
 # Commands parser
 # --------------------------------
 
-def main():
-    argparser = argparse.ArgumentParser(add_help=False)
-    argparser.set_defaults(func=configure)
-    argparser.add_argument('--switch', type=int, action='store')
+def setup_args(superparser):
+    superparser.set_defaults(func=configure)
+    superparser.add_argument('--switch', type=int, action='store')
 
-    args = argparser.parse_args()
-    args.func(args)
 
-if __name__ == '__main__':
-    main()

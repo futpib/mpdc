@@ -19,10 +19,7 @@ setup(
     packages=find_packages(),
     entry_points={
           'console_scripts': [
-              'mpdc-playlist = mpdc.mpdc_playlist:main',
-              'mpdc-collections = mpdc.mpdc_collections:main',
-              'mpdc-database = mpdc.mpdc_database:main',
-              'mpdc-configure = mpdc.mpdc_configure:main'
+              'mpdc = mpdc.mpdc_cli:main',
           ]
     },
     install_requires=['ply >= 3.4', 'python-mpd2 >= 0.4.0']

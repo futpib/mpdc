@@ -156,64 +156,38 @@ def edit(args):
 # --------------------------------
 # Commands parser
 # --------------------------------
+def setup_args(superparser):
+    subparsers = superparser.add_subparsers()
 
-def main():
-    argparser = argparse.ArgumentParser(add_help=False)
-    subparsers = argparser.add_subparsers()
-
-    listsongs_p = subparsers.add_parser('ls')
+    listsongs_p = subparsers.add_parser('list', aliases=['ls'], priority='-')
     listsongs_p.add_argument('collection', nargs='?')
     listsongs_p.add_argument('-f', nargs='?', const='')
     listsongs_p.add_argument('--p', action='store_true')
     listsongs_p.add_argument('--np', action='store_true')
     listsongs_p.set_defaults(func=ls)
 
-    show_p = subparsers.add_parser('show')
+    show_p = subparsers.add_parser('show', priority='-')
     show_p.add_argument('alias')
     show_p.add_argument('-f', nargs='?', const='')
     show_p.set_defaults(func=show)
 
-    find_p = subparsers.add_parser('find')
+    find_p = subparsers.add_parser('find', priority='-')
     find_p.add_argument('pattern')
     find_p.set_defaults(func=find)
 
-    addsongs_p = subparsers.add_parser('addsongs')
+    addsongs_p = subparsers.add_parser('add', priority='-')
     addsongs_p.add_argument('alias')
     addsongs_p.add_argument('collection')
     addsongs_p.set_defaults(func=add_songs)
 
-    removesongs_p = subparsers.add_parser('rmsongs')
+    removesongs_p = subparsers.add_parser('remove', aliases=['rm'], priority='-')
     removesongs_p.add_argument('alias')
     removesongs_p.add_argument('collection')
     removesongs_p.set_defaults(func=remove_songs)
 
-    check_p = subparsers.add_parser('check')
+    check_p = subparsers.add_parser('check', priority='-')
     check_p.set_defaults(func=check)
 
-    edit_p = subparsers.add_parser('edit')
+    edit_p = subparsers.add_parser('edit', priority='-')
     edit_p.set_defaults(func=edit)
 
-    if len(sys.argv) == 1:
-        cmd = input_box('mpdc-collections', 'Command for mpdc-collections:')
-        if cmd is None or not cmd:
-            sys.exit(0)
-        if cmd.startswith('addsongs') or cmd.startswith('rmsongs'):
-            lex = shlex.shlex(cmd, posix=True)
-            lex.whitespace_split = True
-            lex.commenters = ''
-            cmd = [next(lex), next(lex), lex.instream.read()]
-        else:
-            cmd = cmd.split(' ', 1)
-        args = argparser.parse_args(cmd)
-    else:
-        args = argparser.parse_args()
-
-    args.func(args)
-
-    if collectionsmanager.need_update:
-        collectionsmanager.write_file()
-        collectionsmanager.update_cache()
-        cache.write('playlists', mpd.get_stored_playlists_info())
-
-if __name__ == '__main__':
-    main()

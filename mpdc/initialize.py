@@ -1,6 +1,7 @@
 # coding: utf-8
 import os
 import sys
+import atexit
 from configparser import ConfigParser
 
 from mpdc.libs.utils import Cache, warning, colors_c, columns_w
@@ -105,6 +106,7 @@ if (update_collections or not cache.exists('collections')
 else:
     collectionsmanager.feed()
 
+atexit.register(collectionsmanager.update)
 
 # --------------------------------
 # Lastfm initialization

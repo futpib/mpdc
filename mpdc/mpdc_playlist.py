@@ -80,75 +80,43 @@ def crop(args):
     mpd.crop()
 
 
-def mpc(args):
-    try:
-        output = subprocess.check_output(mpd.mpc_c + shlex.split(args.command))
-        print(output.decode().strip())
-    except subprocess.CalledProcessError:
-        pass
-
-
 # --------------------------------
 # Commands parser
 # --------------------------------
 
-def main():
-    argparser = argparse.ArgumentParser(add_help=False)
-    subparsers = argparser.add_subparsers()
+def setup_args(superparser):
+    subparsers = superparser.add_subparsers()
 
-    add_p = subparsers.add_parser('add')
+    add_p = subparsers.add_parser('add', priority='-')
     add_p.add_argument('collection')
     add_p.set_defaults(func=add)
 
-    addp_p = subparsers.add_parser('addp')
+    addp_p = subparsers.add_parser('addp', priority='-')
     addp_p.add_argument('collection')
     addp_p.set_defaults(func=addp)
 
-    insert_p = subparsers.add_parser('ins')
+    insert_p = subparsers.add_parser('insert', priority='-')
     insert_p.add_argument('collection')
     insert_p.set_defaults(func=insert)
 
-    remove_p = subparsers.add_parser('rm')
-    remove_p.add_argument('collection')
-    remove_p.set_defaults(func=remove)
-
-    keep_p = subparsers.add_parser('k')
-    keep_p.add_argument('collection')
-    keep_p.set_defaults(func=keep)
-
-    replace_p = subparsers.add_parser('re')
+    replace_p = subparsers.add_parser('replace', priority='-')
     replace_p.add_argument('collection')
     replace_p.set_defaults(func=replace)
 
-    replacep_p = subparsers.add_parser('rep')
-    replacep_p.add_argument('collection')
-    replacep_p.set_defaults(func=replacep)
+    remove_p = subparsers.add_parser('remove', aliases=['rm'], priority='-')
+    remove_p.add_argument('collection')
+    remove_p.set_defaults(func=remove)
 
-    play_p = subparsers.add_parser('p')
+    keep_p = subparsers.add_parser('keep', priority='-')
+    keep_p.add_argument('collection')
+    keep_p.set_defaults(func=keep)
+
+    play_p = subparsers.add_parser('play', priority='-')
     play_p.add_argument('collection')
     play_p.set_defaults(func=play)
 
-    clear_p = subparsers.add_parser('clear')
+    clear_p = subparsers.add_parser('clear', priority='-')
     clear_p.set_defaults(func=clear)
 
-    crop_p = subparsers.add_parser('crop')
+    crop_p = subparsers.add_parser('crop', priority='-')
     crop_p.set_defaults(func=crop)
-
-    mpc_p = subparsers.add_parser(':')
-    mpc_p.add_argument('command')
-    mpc_p.set_defaults(func=mpc)
-
-    if len(sys.argv) == 1:
-        cmd = input_box('mpdc-playlist', 'Command for mpdc-playlist:')
-        if cmd is None or not cmd:
-            sys.exit(0)
-        if cmd[0] == ':' and cmd[1] != ' ':
-            cmd = ': ' + cmd[1:]
-        args = argparser.parse_args(cmd.split(' ', 1))
-    else:
-        args = argparser.parse_args()
-
-    args.func(args)
-
-if __name__ == '__main__':
-    main()

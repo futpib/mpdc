@@ -84,30 +84,28 @@ def lastfm_update_albums(args):
 # Commands parser
 # --------------------------------
 
-def main():
-    argparser = argparse.ArgumentParser(add_help=False)
-    subparsers = argparser.add_subparsers()
+def setup_args(superparser):
+    subparsers = superparser.add_subparsers()
 
-    update_p = subparsers.add_parser('update')
+    update_p = subparsers.add_parser('update', priority='-')
     update_p.set_defaults(func=update)
 
-    check_p = subparsers.add_parser('check')
-    check_p.set_defaults(func=check)
+    check_p = subparsers.add_parser('check', priority='-')
+    check_p.add_argument('collection', nargs='*')
+    check_p.set_defaults(collection=['all'], func=check)
 
-    lastfm_p = subparsers.add_parser('lastfm')
+    lastfm_p = subparsers.add_parser('lastfm', priority='-')
     lastfm_sp = lastfm_p.add_subparsers()
 
-    lastfm_update_p = lastfm_sp.add_parser('update')
+    lastfm_update_p = lastfm_sp.add_parser('update', priority='-')
     lastfm_update_sp = lastfm_update_p.add_subparsers()
 
-    lastfm_update_artists_p = lastfm_update_sp.add_parser('artists')
+    lastfm_update_artists_p = lastfm_update_sp.add_parser('artists', priority='-')
     lastfm_update_artists_p.set_defaults(func=lastfm_update_artists)
 
-    lastfm_update_albums_p = lastfm_update_sp.add_parser('albums')
+    lastfm_update_albums_p = lastfm_update_sp.add_parser('albums', priority='-')
     lastfm_update_albums_p.set_defaults(func=lastfm_update_albums)
 
     args = argparser.parse_args()
     args.func(args)
 
-if __name__ == '__main__':
-    main()
